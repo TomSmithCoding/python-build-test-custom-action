@@ -1,0 +1,49 @@
+name: "Build and Test Python Code" # Name for marketplace/workflow
+description: "Used to run the build and testing of python code"
+inputs:
+  python-version:
+    description: "The version of Python to use"
+    required: true
+  output-path:
+    description: "The output path for the published application"
+    required: true
+outputs:
+  artifact-path:
+    description: "The path to the build artifact"
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }} # .x is semantic version syntax to get the latest minor release.
+
+    # You can test your matrix by printing the current Python version
+    - name: Display Python version
+      run: python -c "import sys; print(sys.version)"
+      shell: bash
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest pytest-md pytest-emoji
+      shell: bash
+
+    - name: Run pytest
+      uses: pavelzw/pytest-action@v2
+      with:
+        verbose: true
+        emoji: true
+        job-summary: true
+        click-to-expand: true
+        report-title: 'Test Report'
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: pythonproject-build
+        path: ${{ inputs.output-path }}/**
+        if-no-files-found: error
